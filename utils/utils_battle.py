@@ -26,6 +26,23 @@ def elementalAdvantage(skill, target_spirit):
 
 # 结算增减限伤
 def calculate_buffs(acting_spirit, target_spirit, is_first_mover, weather_or_environment, skill):
+    # 初始化
+    acting_spirit.physical_damage_boost_rate = 1.0
+    acting_spirit.magical_damage_boost_rate = 1.0
+    acting_spirit.real_damage_boost_rate = 1.0
+    acting_spirit.physical_damage_boost = 0
+    acting_spirit.magical_damage_boost = 0
+    acting_spirit.real_damage_boost = 0
+    target_spirit.physical_damage_reduction_rate = 1.0
+    target_spirit.magical_damage_reduction_rate = 1.0
+    target_spirit.real_damage_reduction_rate = 1.0
+    target_spirit.physical_damage_reduction = 0
+    target_spirit.magical_damage_reduction = 0
+    target_spirit.real_damage_reduction = 0
+    target_spirit.physical_damage_limit = 999
+    target_spirit.magical_damage_limit = 999
+    target_spirit.real_damage_limit = 999
+
     # 攻击宠物增伤区
     # 天气环境
     if weather_or_environment["type"] == 1 and skill.element == "fire":  # 暴晒
@@ -52,7 +69,6 @@ def calculate_buffs(acting_spirit, target_spirit, is_first_mover, weather_or_env
 # type: 0--真伤, 1--物理伤害, 2--魔法伤害
 def attack(acting_spirit, target_spirit, weather_or_environment, type, power, elemental_advantage, skill):
     calculate_buffs(acting_spirit, target_spirit, True, weather_or_environment, skill)
-    calculate_buffs(target_spirit, acting_spirit, False, weather_or_environment, skill)
     
     if type == 0:
         damage = (power * acting_spirit.real_damage_boost_rate + acting_spirit.real_damage_boost - target_spirit.real_damage_reduction) * target_spirit.real_damage_reduction_rate * elemental_advantage
@@ -77,6 +93,7 @@ def attack(acting_spirit, target_spirit, weather_or_environment, type, power, el
         damage = min(damage, target_spirit.magical_damage_limit)
         target_spirit.hp -= max(damage, 0)
         print(f"{acting_spirit.id} dealt {max(damage, 1)} magical damage to {target_spirit.id}.")
+        print(acting_spirit.magical_damage_boost_rate)
 
 
 # 使用技能
@@ -91,8 +108,9 @@ def action(acting_spirit, skill_id, target_spirit, is_first_mover, weather_or_en
         skill.pp -= 1
 
         # 回复血量
-        acting_spirit.hp = min(acting_spirit.hp + 80 * acting_spirit.imprints["Zhuque_Tianhuo_self"], acting_spirit.maxhp)
-        print(f"{acting_spirit.id} restored {80 * acting_spirit.imprints['Zhuque_Tianhuo_self']} HP.")
+        if acting_spirit.imprints["Zhuque_Tianhuo_self"] > 0:
+            acting_spirit.hp = min(acting_spirit.hp + 80 * acting_spirit.imprints["Zhuque_Tianhuo_self"], acting_spirit.maxhp)
+            print(f"{acting_spirit.id} restored {80 * acting_spirit.imprints['Zhuque_Tianhuo_self']} HP.")
 
         # 赐予天火
         if "Zhuque_Tianhuo_enemy" not in target_spirit.imprints:
@@ -158,10 +176,10 @@ def action(acting_spirit, skill_id, target_spirit, is_first_mover, weather_or_en
         
         # 威力伤害
         if "Zhuque_Tianhuo_enemy" not in target_spirit.imprints or target_spirit.imprints["Zhuque_Tianhuo_enemy"] < 5:
-            attack(acting_spirit, target_spirit, weather_or_environment, 2, 90, 2, skill)
+            attack(acting_spirit, target_spirit, weather_or_environment, 2, 90, elementalAdvantage(skill, target_spirit), skill)
         # 强化威力技能-必定克制
         else:
-            attack(acting_spirit, target_spirit, weather_or_environment, 2, 90, elementalAdvantage(skill, target_spirit), skill)
+            attack(acting_spirit, target_spirit, weather_or_environment, 2, 90, 2, skill)
 
         # 依据对手被天火灼烧次数造成固伤
         if "Zhuque_Tianhuo_enemy" not in target_spirit.imprints:

@@ -39,11 +39,13 @@ class BattleCore:
                 second_mover = self.player2_spirit_onfield
                 first_action = player1_action
                 second_action = player2_action
+                print("Player 1 moves first")
             else:
                 first_mover = self.player2_spirit_onfield
                 second_mover = self.player1_spirit_onfield
                 first_action = player2_action
                 second_action = player1_action
+                print("Player 2 moves first")
 
 
             action(first_mover, first_action, second_mover, is_first_mover=True, weather_or_environment=self.weather_or_environment)
@@ -90,6 +92,16 @@ class BattleCore:
             imprint1 = player1_imprints.get(key, 0)
             imprint2 = player2_imprints.get(key, 0)
             print(f"{key + ': ' + str(imprint1):<25}{key + ': ' + str(imprint2):>25}")
+        print("-" * 50)
+
+        print(f"{'Player 1 Abilities Boosts':<25}{'Player 2 Abilities Boosts':>25}")
+        player1_abilities_boosts = self.player1_spirit_onfield.ability_boosts
+        player2_abilities_boosts = self.player2_spirit_onfield.ability_boosts
+        all_boost_keys = set(player1_abilities_boosts.keys()).union(player2_abilities_boosts.keys())
+        for key in all_boost_keys:
+            boost1 = player1_abilities_boosts.get(key, 0)
+            boost2 = player2_abilities_boosts.get(key, 0)
+            print(f"{key + ': ' + str(boost1):<25}{key + ': ' + str(boost2):>25}")
         print("=" * 50)
 
 if __name__ == "__main__":
