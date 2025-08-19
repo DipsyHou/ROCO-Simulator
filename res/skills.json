@@ -1,0 +1,30 @@
+[
+    {
+        "id": 1,
+        "maxpp": 6,
+        "pp": 6,
+        "element": "normal",
+        "priority": 14
+    },
+    {
+        "id": 2,
+        "maxpp": 10,
+        "pp": 10,
+        "element": "flying",
+        "priority": 10
+    },
+    {
+        "id": 3,
+        "maxpp": 12,
+        "pp": 12,
+        "element": "fire",
+        "priority": 9
+    },
+    {
+        "id": 4,
+        "maxpp": 12,
+        "pp": 12,
+        "element": "goast",
+        "priority": 9
+    }
+]
