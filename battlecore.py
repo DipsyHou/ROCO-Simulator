@@ -1,6 +1,9 @@
 from utils.utils_load_data import load_spirits, load_skills
 from utils.utils_battle import compareSpeed, elementalAdvantage, attack, action
+from utils.utils_update_states import update_after_turn
+
 import copy
+import os
 
 class BattleCore:
     def __init__(self, player1_spirits, player2_spirits):
@@ -20,8 +23,10 @@ class BattleCore:
 
     # 战斗回合
     def battle(self, player1_action, player2_action):
+        # 清空终端
+        os.system('cls' if os.name == 'nt' else 'clear')
 
-        # update weather or environment state
+        # 更新天气环境
         if self.weather_or_environment["locked"] == 0:
             if self.weather_or_environment["type"] != 0:
                 self.weather_or_environment["last_turn"] -= 1
@@ -47,16 +52,19 @@ class BattleCore:
                 second_action = player1_action
                 print("Player 2 moves first")
 
-
-            action(first_mover, first_action, second_mover, is_first_mover=True, weather_or_environment=self.weather_or_environment)
+            print( "Player" + str(1 if first_mover == self.player1_spirit_onfield else 2) + " actions:")
+            action(self, 1 if first_mover == self.player1_spirit_onfield else 2, first_action, True)
 
             if second_mover.hp <= 0:
                 pass # todo
             
-            action(second_mover, second_action, first_mover, is_first_mover=False, weather_or_environment=self.weather_or_environment)
+            print( "Player" + str(2 if first_mover == self.player1_spirit_onfield else 1) + " actions:")
+            action(self, 2 if first_mover == self.player1_spirit_onfield else 1, second_action, False)
 
             if first_mover.hp <= 0:
                 pass # todo
+
+            update_after_turn(self)
 
 
     # 打印战局
