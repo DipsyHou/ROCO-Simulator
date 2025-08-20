@@ -258,7 +258,12 @@ def Zhuque(battle, which_player, skill, is_first_mover):
             print(f"{acting_spirit.id} restored {80} HP.")
 
         
-def Shelly_of_light(acting_spirit, skill, target_spirit, is_first_mover, weather_or_environment):
+def Shelly_of_light(battle, which_player, skill, is_first_mover):
+
+    acting_spirit = battle.player1_spirit_onfield if which_player == 1 else battle.player2_spirit_onfield
+    target_spirit = battle.player2_spirit_onfield if which_player == 1 else battle.player1_spirit_onfield
+    acting_spirit_team = battle.player1_spirits if which_player == 1 else battle.player2_spirits
+    target_spirit_team = battle.player2_spirits if which_player == 1 else battle.player1_spirits
     
     # 柔如彩虹
     if skill.id == 5:
@@ -279,17 +284,48 @@ def Shelly_of_light(acting_spirit, skill, target_spirit, is_first_mover, weather
     elif skill.id == 7:
         skill.pp -= 1
 
+        # 终止约束效果
+        for spirit in acting_spirit_team:
+            spirit.imprints["shelly_of_light_binding_self"] = 0
+
+        for spirit in target_spirit_team:
+            spirit.imprints["shelly_of_light_binding_enemy"] = 0
+
         # 永久提升队友威力伤害
-        acting_spirit.physical_damage_boost_rate *= 1.2
-        acting_spirit.magical_damage_boost_rate *= 1.2
+        if acting_spirit.hp >= acting_spirit.maxhp * 0.25:
+            for spirit in acting_spirit_team:
+                spirit.imprints["shelly_of_light_blessing"] = 1
+                
+        # 生命值低时效果提升    
+        else:
+            for spirit in acting_spirit_team:
+                spirit.imprints["shelly_of_light_blessing"] = 2
+            
 
-
-        # 生命值低时效果提升
+        
 
     # 至神约束
     elif skill.id == 8:
         skill.pp -= 1
 
-        # 重置并锁定全场强化
+        # 终止祝福效果
+        for spirit in acting_spirit_team:
+            spirit.imprints["shelly_of_light_blessing"] = 0
 
-        # 生命值低时效果提升
+        # 生命值低时额外强制重置全场强化
+        if acting_spirit.hp < acting_spirit.maxhp * 0.25:
+            for spirit in acting_spirit_team + target_spirit_team:
+                spirit.ability_boosts["atk"] = 0
+                spirit.ability_boosts["mp"] = 0
+                spirit.ability_boosts["defence"] = 0
+                spirit.ability_boosts["resistance"] = 0
+                spirit.ability_boosts["speed"] = 0
+
+        # 锁定全场强化
+        for spirit in acting_spirit_team:
+            spirit.imprints["shelly_of_light_binding_self"] = 1
+
+        for spirit in target_spirit_team:
+            spirit.imprints["shelly_of_light_binding_enemy"] = 1
+
+        
