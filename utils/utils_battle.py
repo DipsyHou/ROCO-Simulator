@@ -1,6 +1,8 @@
 import random
 
-# if spirit1 is first return 1, else return 0
+
+# 决定先手
+# spirit1先手则返回 1, 否则返回 0
 def compareSpeed(spirit1, spirit2):
     if spirit1.speed > spirit2.speed:
         return 1
@@ -10,6 +12,7 @@ def compareSpeed(spirit1, spirit2):
         return random.randint(0, 1)
 
 
+# 计算属性克制关系
 def elementalAdvantage(skill, target_spirit):
     advantage_map = {
         "fire": {"plant": 1, "ice": 1, "metal": 1, "water": -1, "rock": -1, "earth": -1},
@@ -61,10 +64,18 @@ def calculate_buffs(battle, which_player, skill, is_first_mover):
     # 攻击宠物增伤区
     # 天气环境
     if battle.weather_or_environment["type"] == 1 and skill.element == "fire":  # 暴晒
-        acting_spirit.physical_damage_boost_rate *= 1.5
-        acting_spirit.magical_damage_boost_rate *= 1.5
+        acting_spirit.physical_damage_boost_rate += 0.5
+        acting_spirit.magical_damage_boost_rate += 0.5
 
     # 印记专属
+    if "shelly_of_light_blessing" not in acting_spirit.imprints or acting_spirit.imprints["shelly_of_light_blessing"] == 0:
+        pass
+    elif acting_spirit.imprints["shelly_of_light_blessing"] == 1:
+        acting_spirit.physical_damage_boost_rate += 0.15
+        acting_spirit.magical_damage_boost_rate += 0.15
+    elif acting_spirit.imprints["shelly_of_light_blessing"] == 2:
+        acting_spirit.physical_damage_boost_rate += 0.25
+        acting_spirit.magical_damage_boost_rate += 0.25
 
     # 宠物专属
     
@@ -119,6 +130,48 @@ def attack(battle, which_player, skill, is_first_mover, type, power, preset_elem
         damage = int(damage)
         target_spirit.hp -= max(damage, 1)
         print(f"{acting_spirit.id} dealt {max(damage, 1)} magical damage to {target_spirit.id}.")
+
+
+# 改变强化等级
+# 参数说明：
+# boost_or_reduction: 1代表正面, 0代表负面
+# boost_level: 强化等级, 为正数
+# boost_level_limit: 如果为 None 则不限制最大强化等级
+def changeAbilityBoosts(battle, which_player, skill, is_first_mover, target_spirit, ability_type, boost_or_reduction, boost_level, boost_level_limit):
+    # 锁强
+    if "shelly_of_light_binding_self" not in target_spirit.imprints or target_spirit.imprints["shelly_of_light_binding_self"] == 0:
+        pass
+    elif "shelly_of_light_binding_enemy" not in target_spirit.imprints or target_spirit.imprints["shelly_of_light_binding_enemy"] == 0:
+        pass
+    else:
+        print(f"{target_spirit.id} is bound and cannot change ability boosts.")
+        return
+
+    if boost_or_reduction == 1:
+        if ability_type == "atk":
+            target_spirit.ability_boosts["atk"] = min(target_spirit.ability_boosts["atk"] + boost_level, boost_level_limit) if boost_level_limit else target_spirit.ability_boosts["atk"] + boost_level
+        elif ability_type == "defence":
+            target_spirit.ability_boosts["defence"] = min(target_spirit.ability_boosts["defence"] + boost_level, boost_level_limit) if boost_level_limit else target_spirit.ability_boosts["defence"] + boost_level
+        elif ability_type == "mp":
+            target_spirit.ability_boosts["mp"] = min(target_spirit.ability_boosts["mp"] + boost_level, boost_level_limit) if boost_level_limit else target_spirit.ability_boosts["mp"] + boost_level
+        elif ability_type == "resistance":
+            target_spirit.ability_boosts["resistance"] = min(target_spirit.ability_boosts["resistance"] + boost_level, boost_level_limit) if boost_level_limit else target_spirit.ability_boosts["resistance"] + boost_level
+        elif ability_type == "speed":
+            target_spirit.ability_boosts["speed"] = min(target_spirit.ability_boosts["speed"] + boost_level, boost_level_limit) if boost_level_limit else target_spirit.ability_boosts["speed"] + boost_level
+        print(f"{target_spirit.id} received a boost of {boost_level} in {ability_type}. Current level: {target_spirit.ability_boosts[ability_type]}")
+    
+    elif boost_or_reduction == 0:
+        if ability_type == "atk":
+            target_spirit.ability_boosts["atk"] = max(target_spirit.ability_boosts["atk"] - boost_level, boost_level_limit) if boost_level_limit else target_spirit.ability_boosts["atk"] - boost_level
+        elif ability_type == "defence":
+            target_spirit.ability_boosts["defence"] = max(target_spirit.ability_boosts["defence"] - boost_level, boost_level_limit) if boost_level_limit else target_spirit.ability_boosts["defence"] - boost_level
+        elif ability_type == "mp":
+            target_spirit.ability_boosts["mp"] = max(target_spirit.ability_boosts["mp"] - boost_level, boost_level_limit) if boost_level_limit else target_spirit.ability_boosts["mp"] - boost_level
+        elif ability_type == "resistance":
+            target_spirit.ability_boosts["resistance"] = max(target_spirit.ability_boosts["resistance"] - boost_level, boost_level_limit) if boost_level_limit else target_spirit.ability_boosts["resistance"] - boost_level
+        elif ability_type == "speed":
+            target_spirit.ability_boosts["speed"] = max(target_spirit.ability_boosts["speed"] - boost_level, boost_level_limit) if boost_level_limit else target_spirit.ability_boosts["speed"] - boost_level
+        print(f"{target_spirit.id} received a reduction of {boost_level} in {ability_type}. Current level: {target_spirit.ability_boosts[ability_type]}")
 
 
 # 使用技能
@@ -238,11 +291,11 @@ def Zhuque(battle, which_player, skill, is_first_mover):
         if "Zhuque_Tianhuo_enemy" not in target_spirit.imprints or target_spirit.imprints["Zhuque_Tianhuo_enemy"] < 5:
 
             # 未造成克制伤害强化1级魔攻
-            if elementalAdvantage(skill, target_spirit) <= 0:
-                acting_spirit.ability_boosts["mp"] = (acting_spirit.ability_boosts["mp"] + 1) if acting_spirit.ability_boosts["mp"] < 1 else acting_spirit.ability_boosts["mp"]
+            if elementalAdvantage(skill, target_spirit) <= 1:
+                changeAbilityBoosts(battle, which_player, skill, is_first_mover, acting_spirit, "mp", boost_or_reduction = 1, boost_level = 1, boost_level_limit = 1)
 
             # 造成抵抗伤害额外删群1
-            if elementalAdvantage(skill, target_spirit) < 0:
+            if elementalAdvantage(skill, target_spirit) < 1:
                 for skill in target_spirit.equipped_skills:
                     skill.pp = max(skill.pp - 1, 0)
         # 威力伤害
@@ -256,7 +309,6 @@ def Zhuque(battle, which_player, skill, is_first_mover):
             acting_spirit.imprints["Zhuque_Tianhuo_self"] += 1
             acting_spirit.hp = min(acting_spirit.hp + 80, acting_spirit.maxhp)
             print(f"{acting_spirit.id} restored {80} HP.")
-
         
 def Shelly_of_light(battle, which_player, skill, is_first_mover):
 
@@ -278,10 +330,9 @@ def Shelly_of_light(battle, which_player, skill, is_first_mover):
         acting_spirit.imprints["abnormality_immunity"] = 4
         acting_spirit.imprints["shelly_of_light_damage_limit"] = 4
 
-    # 永恒思念
 
     # 圣光祝福
-    elif skill.id == 7:
+    elif skill.id == 6:
         skill.pp -= 1
 
         # 终止约束效果
@@ -295,17 +346,15 @@ def Shelly_of_light(battle, which_player, skill, is_first_mover):
         if acting_spirit.hp >= acting_spirit.maxhp * 0.25:
             for spirit in acting_spirit_team:
                 spirit.imprints["shelly_of_light_blessing"] = 1
-                
+
         # 生命值低时效果提升    
         else:
             for spirit in acting_spirit_team:
                 spirit.imprints["shelly_of_light_blessing"] = 2
             
 
-        
-
     # 至神约束
-    elif skill.id == 8:
+    elif skill.id == 7:
         skill.pp -= 1
 
         # 终止祝福效果
@@ -328,4 +377,17 @@ def Shelly_of_light(battle, which_player, skill, is_first_mover):
         for spirit in target_spirit_team:
             spirit.imprints["shelly_of_light_binding_enemy"] = 1
 
+
+    # 永恒思念
+    elif skill.id == 8:
+        skill.pp -= 1
+
+        # 祝福效果生效时额外效果
+        if acting_spirit.imprints["shelly_of_light_blessing"] > 0:
+            pass
+        # 约束效果生效时额外效果
+        if acting_spirit.imprints["shelly_of_light_binding_self"] > 0:
+            pass
+        
+            
         
